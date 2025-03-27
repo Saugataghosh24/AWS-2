@@ -44,9 +44,10 @@ exports.handler = async (event) => {
     };
 
     console.log("Saving to DynamoDB:", JSON.stringify(newEvent, null, 2));
-
+    
+    let dynamoResult;
     try {
-        await dynamoDB.put({
+        dynamoResult = await dynamoDB.put({
             TableName: TABLE_NAME,
             Item: newEvent
         }).promise();
