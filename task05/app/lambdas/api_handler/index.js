@@ -11,7 +11,7 @@ const AWS = require("aws-sdk");
 const { v4: uuidv4 } = require("uuid");
 
 const dynamoDB = new AWS.DynamoDB.DocumentClient();
-const TABLE_NAME = process.env.TARGET_TABLE || "Events";
+const TABLE_NAME = process.env.TARGET_TABLE || "Events"; // Ensure TARGET_TABLE environment variable is properly set.
 
 exports.handler = async (event) => {
     console.log("Received event:", JSON.stringify(event, null, 2));
@@ -19,6 +19,7 @@ exports.handler = async (event) => {
     let requestBody;
     try {
         requestBody = typeof event.body === "string" ? JSON.parse(event.body) : event.body;
+        console.log("Parsed request body:", JSON.stringify(requestBody, null, 2));
     } catch (err) {
         console.error("Invalid JSON format:", err);
         return {
@@ -29,6 +30,7 @@ exports.handler = async (event) => {
     }
 
     if (!requestBody || !requestBody.principalId || !requestBody.content || typeof requestBody.principalId !== "number") {
+        console.error("Missing required fields: principalId (number) and content (object) are required");
         return {
             statusCode: 400,
             headers: { "Content-Type": "application/json" },
@@ -43,16 +45,15 @@ exports.handler = async (event) => {
         body: requestBody.content
     };
 
-    console.log("Saving to DynamoDB:", JSON.stringify(newEvent, null, 2));
-    
-    let dynamoResult;
+    console.log("New event to save:", JSON.stringify(newEvent, null, 2));
+
     try {
-        dynamoResult = await dynamoDB.put({
+        await dynamoDB.put({
             TableName: TABLE_NAME,
             Item: newEvent
         }).promise();
 
-        console.log("Event successfully saved!");
+        console.log("Event successfully saved to DynamoDB");
 
         return {
             statusCode: 201,
